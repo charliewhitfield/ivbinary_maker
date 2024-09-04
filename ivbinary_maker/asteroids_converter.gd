@@ -20,8 +20,8 @@
 class_name AsteroidsConverter
 extends RefCounted
 
-const math := preload("res://ivoyager/static/math.gd")
-const files := preload("res://ivoyager/static/files.gd")
+const math := preload("res://addons/ivoyager_core/static/math.gd")
+const files := preload("res://addons/ivoyager_core/static/files.gd")
 
 
 signal status(func_type, message)
@@ -66,7 +66,7 @@ const GM := 1.32712440042e20 # m^3 s^-2 (used only if we don't have proper eleme
 
 # internal
 const N_ELEMENTS := 12 # [a, e, i, Om, w, M0, n, M, mag, s, g, de]
-const BINARY_FILE_MAGNITUDES := IVSBGBuilder.BINARY_FILE_MAGNITUDES
+const BINARY_FILE_MAGNITUDES := IVBinaryAsteroidsBuilder.BINARY_FILE_MAGNITUDES
 const SBG_CLASS_ASTEROIDS := IVEnums.SBGClass.SBG_CLASS_ASTEROIDS
 
 
@@ -123,6 +123,7 @@ func revise_names() -> void:
 		var line: String = read_file.get_line()
 		var number := int(line.substr(0, 6))
 		assert(number == index + 1)
+		@warning_ignore("unsafe_call_argument")
 		assert(number == int(_asteroid_names[index]))
 		var astdys2_name := line.substr(7, 17)
 		astdys2_name = astdys2_name.strip_edges(false, true)
@@ -355,6 +356,7 @@ func make_binary_files() -> void:
 			if is_trojan != is_trojan_group[sbg_alias]:
 				continue
 			if is_trojan:
+				@warning_ignore("unsafe_call_argument")
 				var lp_integer := int(_trojan_elements[index][0])
 				assert(lp_integer == 4 or lp_integer == 5)
 				if def.lp_integer != lp_integer:
@@ -405,6 +407,7 @@ func make_binary_files() -> void:
 				for j in N_ELEMENTS:
 					elements[j] = _asteroid_elements[index * N_ELEMENTS + j]
 				if is_trojans:
+					@warning_ignore("unsafe_call_argument")
 					sbg_proxy.set_data(name_, elements, _trojan_elements[index])
 				else:
 					sbg_proxy.set_data(name_, elements)
@@ -509,4 +512,3 @@ func _read_astdys_cat_file(data_file: String, func_type: int) -> void:
 func _update_status(func_type: int, message: String) -> void:
 	call_deferred("emit_signal", "status", func_type, message)
 	print(message)
-

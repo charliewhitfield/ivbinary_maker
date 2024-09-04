@@ -142,5 +142,3 @@ func _export_images() -> void:
 	
 	status.emit("Generated 3 rings textures of width %s (%s padding + %s rings image + %s padding)"
 			% [texture_width, padding, image_width, padding])
-
-
