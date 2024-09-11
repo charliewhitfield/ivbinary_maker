@@ -35,12 +35,14 @@ const UNLITSIDE_FILE := "unlitside.txt"
 
 # export
 const EXPORT_PREFIX := "res://ivbinary_export/rings/saturn.rings"
-
-
+const BACKSCATTER_FORMAT := ".backscatter.%s.png"
+const FORWARDSCATTER_FORMAT := ".forwardscatter.%s.png"
+const UNLITSIDE_FORMAT := ".unlitside.%s.png"
 
 const UNLIT_COLOR := Color(1.0, 0.97075, 0.952)
 const FORWARD_REDSHIFT := 0.05
 const END_PADDING := 0.05 # saved image is 10% bigger
+const LOD_LEVELS := 9
 
 
 var color: Array[Color] = [] # lit side
@@ -49,12 +51,19 @@ var backscattered: Array[float] = []
 var forwardscattered: Array[float] = []
 var unlitside: Array[float] = []
 
+var backscattered_map: Array[Color] = []
+var forwardscattered_map: Array[Color] = []
+var unlitside_map: Array[Color] = []
+
 
 
 func convert_data() -> void:
 	_read_data()
-	_export_images()
-
+	_make_color_maps()
+	for lod in LOD_LEVELS:
+		_make_lod_images(lod)
+	status.emit("Generated rings textures: base width = %s; lod = %s" % [backscattered_map.size(),
+			LOD_LEVELS])
 
 
 func _read_data() -> void:
@@ -64,6 +73,7 @@ func _read_data() -> void:
 		return
 	
 	# color
+	color.clear()
 	var file_length := file.get_length()
 	while file.get_position() < file_length:
 		var line: String = file.get_line()
@@ -79,6 +89,7 @@ func _read_data() -> void:
 	] as Array[String]:
 		file = FileAccess.open(SOURCE_PATH + file_name, FileAccess.READ)
 		var array: Array[float] = get(file_name.get_basename())
+		array.clear()
 		if !file:
 			print("Failed to open file for read: ", SOURCE_PATH + file_name)
 			return
@@ -90,57 +101,56 @@ func _read_data() -> void:
 		assert(array.size() == color.size())
 
 
-func _export_images() -> void:
-	var image_width: int = color.size()
-	var padding := roundi(END_PADDING * image_width)
-	var texture_width := image_width + 2 * padding
-	var backscattered_image := Image.create(texture_width, 2, true, Image.FORMAT_RGBA8)
-	var forwardscattered_image := Image.create(texture_width, 2, true, Image.FORMAT_RGBA8)
-	var unlitside_image := Image.create(texture_width, 2, true, Image.FORMAT_RGBA8)
-	var texel_pos := 0
-	for i in padding:
-		backscattered_image.set_pixel(texel_pos, 0, Color(0.0, 0.0, 0.0, 0.0))
-		backscattered_image.set_pixel(texel_pos, 1, Color(0.0, 0.0, 0.0, 0.0))
-		forwardscattered_image.set_pixel(texel_pos, 0, Color(0.0, 0.0, 0.0, 0.0))
-		forwardscattered_image.set_pixel(texel_pos, 1, Color(0.0, 0.0, 0.0, 0.0))
-		unlitside_image.set_pixel(texel_pos, 0, Color(0.0, 0.0, 0.0, 0.0))
-		unlitside_image.set_pixel(texel_pos, 1, Color(0.0, 0.0, 0.0, 0.0))
-		texel_pos += 1
-	for i in image_width:
+func _make_color_maps() -> void:
+	# w/ padding
+	backscattered_map.clear()
+	forwardscattered_map.clear()
+	unlitside_map.clear()
+	var rings_width: int = color.size()
+	var padding: Array[Color] = Array([], TYPE_COLOR, &"", null)
+	padding.resize(roundi(END_PADDING * rings_width))
+	padding.fill(Color(0.0, 0.0, 0.0, 0.0))
+	backscattered_map.append_array(padding)
+	forwardscattered_map.append_array(padding)
+	unlitside_map.append_array(padding)
+	for i in rings_width:
 		var alpha := 1.0 - transparency[i]
-		var backscattered_color := Color(color[i] * backscattered[i], alpha)
-		var forwardscattered_color := Color(color[i] * forwardscattered[i], alpha)
-#		forwardscattered_color = _redshift_forwardscattered(forwardscattered_color)
-		var unlit_color := Color(UNLIT_COLOR * unlitside[i], alpha)
-		backscattered_image.set_pixel(texel_pos, 0, backscattered_color)
-		backscattered_image.set_pixel(texel_pos, 1, backscattered_color)
-		forwardscattered_image.set_pixel(texel_pos, 0, forwardscattered_color)
-		forwardscattered_image.set_pixel(texel_pos, 1, forwardscattered_color)
-		unlitside_image.set_pixel(texel_pos, 0, unlit_color)
-		unlitside_image.set_pixel(texel_pos, 1, unlit_color)
-		texel_pos += 1
-	for i in padding:
-		backscattered_image.set_pixel(texel_pos, 0, Color(0.0, 0.0, 0.0, 0.0))
-		backscattered_image.set_pixel(texel_pos, 1, Color(0.0, 0.0, 0.0, 0.0))
-		forwardscattered_image.set_pixel(texel_pos, 0, Color(0.0, 0.0, 0.0, 0.0))
-		forwardscattered_image.set_pixel(texel_pos, 1, Color(0.0, 0.0, 0.0, 0.0))
-		unlitside_image.set_pixel(texel_pos, 0, Color(0.0, 0.0, 0.0, 0.0))
-		unlitside_image.set_pixel(texel_pos, 1, Color(0.0, 0.0, 0.0, 0.0))
-		texel_pos += 1
+		backscattered_map.append(Color(color[i] * backscattered[i], alpha))
+		forwardscattered_map.append(Color(color[i] * forwardscattered[i], alpha))
+		unlitside_map.append(Color(UNLIT_COLOR * unlitside[i], alpha))
+	backscattered_map.append_array(padding)
+	forwardscattered_map.append_array(padding)
+	unlitside_map.append_array(padding)
 
-	# Saved Texture2DArray is not recognized by editor importer!
-#	const EXPORT_PATH := "res://ivbinary_export/rings/saturn.rings.res"
-#	var array := [backscattered_image, forwardscattered_image, unlitside_image] as Array[Image]
-#	var texture_array := Texture2DArray.new()
-#	texture_array.create_from_images(array)
-#	print(ResourceSaver.get_recognized_extensions(texture_array))
-#	ResourceSaver.save(texture_array, EXPORT_PATH, ResourceSaver.FLAG_COMPRESS)
 
-	backscattered_image.save_png(EXPORT_PREFIX + ".backscatter.png")
-	forwardscattered_image.save_png(EXPORT_PREFIX + ".forwardscatter.png")
-	unlitside_image.save_png(EXPORT_PREFIX + ".unlitside.png")
+func _make_lod_images(lod: int) -> void:
+	# Note: As of Godot 4.2.x, a saved Texture2DArray was not recognized by editor importer.
+	# We save png images instead and expect ivoyager_core to build the Texture2DArrays.
+	var map_width := backscattered_map.size()
+	var sample_width := 1 << lod
+	var image_width := roundi(float(map_width) / float(sample_width))
 	
-	status.emit("Generated 3 rings textures of width %s (%s padding + %s rings image + %s padding)"
-			% [texture_width, padding, image_width, padding])
+	var backscattered_image := Image.create_empty(image_width, 1, false, Image.FORMAT_RGBA8)
+	var forwardscattered_image := Image.create_empty(image_width, 1, false, Image.FORMAT_RGBA8)
+	var unlitside_image := Image.create_empty(image_width, 1, false, Image.FORMAT_RGBA8)
+	
+	for i in image_width:
+		var start := i * sample_width
+		var stop := mini(start + sample_width, map_width)
+		backscattered_image.set_pixel(i, 0, _get_color(backscattered_map, start, stop))
+		forwardscattered_image.set_pixel(i, 0, _get_color(forwardscattered_map, start, stop))
+		unlitside_image.set_pixel(i, 0, _get_color(unlitside_map, start, stop))
+	
+	backscattered_image.save_png(EXPORT_PREFIX + BACKSCATTER_FORMAT % lod)
+	forwardscattered_image.save_png(EXPORT_PREFIX + FORWARDSCATTER_FORMAT % lod)
+	unlitside_image.save_png(EXPORT_PREFIX + UNLITSIDE_FORMAT % lod)
 
 
+func _get_color(map: Array[Color], start: int, stop: int) -> Color:
+	var sample := Color(0.0, 0.0, 0.0, 0.0)
+	var x := start
+	while x < stop:
+		sample += map[x]
+		x += 1
+	sample /= float(stop - start)
+	return sample

@@ -81,6 +81,7 @@ func _ready() -> void:
 
 
 func _run_function(func_type: int) -> void:
+	@warning_ignore("unsafe_call_argument")
 	_asteroids_converter.call_method(METHODS[func_type])
 	if func_type == _asteroids_converter.START_OVER:
 		for i in METHODS.size():
@@ -89,4 +90,3 @@ func _run_function(func_type: int) -> void:
 
 func _on_status(func_type: int, message: String) -> void:
 	_status_labels[func_type].text = message
-

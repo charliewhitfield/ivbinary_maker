@@ -20,8 +20,8 @@
 class_name AsteroidsConverter
 extends RefCounted
 
-const math := preload("res://ivoyager/static/math.gd")
-const files := preload("res://ivoyager/static/files.gd")
+const math := preload("res://addons/ivoyager_core/static/math.gd")
+const files := preload("res://addons/ivoyager_core/static/files.gd")
 
 
 signal status(func_type, message)
@@ -50,8 +50,6 @@ const EXPORT_DIR := "res://ivbinary_export/asteroid_binaries"
 const BINARIES_EXTENSION := "ivbinary"
 
 # source data
-const CAT_EPOCH := 60200.0 # This changes! Check 'Epoch(MJD)' in *.cat files!
-const J2000_SEC := (CAT_EPOCH - 51544.5) * 86400.0 # seconds from our internal J2000 epoch
 const ASTEROID_ORBITAL_ELEMENTS_NUMBERED_FILE := "allnum.cat"
 const ASTEROID_ORBITAL_ELEMENTS_MULTIOPPOSITION_FILE := "ufitobs.cat"
 const ASTEROID_PROPER_ELEMENTS_FILES := ["all.syn", "tno.syn", "secres.syn"]
@@ -66,13 +64,15 @@ const GM := 1.32712440042e20 # m^3 s^-2 (used only if we don't have proper eleme
 
 # internal
 const N_ELEMENTS := 12 # [a, e, i, Om, w, M0, n, M, mag, s, g, de]
-const BINARY_FILE_MAGNITUDES := IVSBGBuilder.BINARY_FILE_MAGNITUDES
+const BINARY_FILE_MAGNITUDES := IVBinaryAsteroidsBuilder.BINARY_FILE_MAGNITUDES
 const SBG_CLASS_ASTEROIDS := IVEnums.SBGClass.SBG_CLASS_ASTEROIDS
 
 
 var _thread: Thread
 
 # current processing
+var _epoch := -INF # expected to be consistent in all .cat files
+var _j2000_sec := NAN
 var _asteroid_elements := PackedFloat32Array()
 var _asteroid_names := []
 var _iau_numbers := [] # -1 for unnumbered
@@ -123,6 +123,7 @@ func revise_names() -> void:
 		var line: String = read_file.get_line()
 		var number := int(line.substr(0, 6))
 		assert(number == index + 1)
+		@warning_ignore("unsafe_call_argument")
 		assert(number == int(_asteroid_names[index]))
 		var astdys2_name := line.substr(7, 17)
 		astdys2_name = astdys2_name.strip_edges(false, true)
@@ -186,7 +187,7 @@ func revise_proper() -> void:
 			
 			# recalculate M0 using proper_n
 			var M: float = _asteroid_elements[index * N_ELEMENTS + 7]
-			var M0 := wrapf(M - proper_n * J2000_SEC, 0.0, TAU) # replaced if we have proper elements
+			var M0 := wrapf(M - proper_n * _j2000_sec, 0.0, TAU) # replaced if we have proper elements
 			_asteroid_elements[index * N_ELEMENTS + 5] = M0
 			
 			# set proper elements
@@ -355,6 +356,7 @@ func make_binary_files() -> void:
 			if is_trojan != is_trojan_group[sbg_alias]:
 				continue
 			if is_trojan:
+				@warning_ignore("unsafe_call_argument")
 				var lp_integer := int(_trojan_elements[index][0])
 				assert(lp_integer == 4 or lp_integer == 5)
 				if def.lp_integer != lp_integer:
@@ -405,6 +407,7 @@ func make_binary_files() -> void:
 				for j in N_ELEMENTS:
 					elements[j] = _asteroid_elements[index * N_ELEMENTS + j]
 				if is_trojans:
+					@warning_ignore("unsafe_call_argument")
 					sbg_proxy.set_data(name_, elements, _trojan_elements[index])
 				else:
 					sbg_proxy.set_data(name_, elements)
@@ -466,7 +469,11 @@ func _read_astdys_cat_file(data_file: String, func_type: int) -> void:
 			print("Duplicate name: " + astdys2_name + "; skipping...")
 			continue
 		
-#		assert(!_astdys2_lookup.has(astdys2_name), "Duplicate name: " + astdys2_name)
+		var epoch := float(line_array[1])
+		if epoch != _epoch:
+			assert(_epoch == -INF, "Inconsistent 'Epoch(MJD) in .cat file")
+			_epoch = epoch # assigned once!
+			_j2000_sec = (epoch - 51544.5) * 86400.0 # seconds from our internal J2000 epoch
 		
 		_astdys2_lookup[astdys2_name] = _index
 		_asteroid_names.append(astdys2_name)
@@ -481,7 +488,7 @@ func _read_astdys_cat_file(data_file: String, func_type: int) -> void:
 		var n := sqrt(GM / (a * a * a)) # replaced if we have proper elements
 		
 		# M = M0 + n * t
-		var M0 := wrapf(M - n * J2000_SEC, 0.0, TAU) # replaced if we have proper elements
+		var M0 := wrapf(M - n * _j2000_sec, 0.0, TAU) # replaced if we have proper elements
 		
 		# [a, e, i, Om, w, M0, n, M, mag, s, g, de]
 		_asteroid_elements.append(a) # au
@@ -509,4 +516,3 @@ func _read_astdys_cat_file(data_file: String, func_type: int) -> void:
 func _update_status(func_type: int, message: String) -> void:
 	call_deferred("emit_signal", "status", func_type, message)
 	print(message)
-

@@ -20,14 +20,12 @@
 extends VBoxContainer
 
 var label_text := """
-Generates a *.png texture that can be used by rings.gdshader.
+Generates png textures that can be used by rings.gdshader.
 
-IMPORTANT! We need mipmaps but not any compression loss or other data changes!
-
-Import settings should be:
+IMPORTANT!!! Import settings should be:
 
   * Compress Mode: Lossless
-  * Mipmaps Generate: On
+  * Mipmaps Generate: OFF (this changed in v0.3.dev!)
   * Everything else: Disabled or Off
 
 After that, the .png and .import files can be added to ivoyager_assets/rings/.
@@ -44,4 +42,3 @@ func _ready() -> void:
 func _on_message(message: String) -> void:
 	($Feedback as Label).text = message
 	print(message)
-
