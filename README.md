@@ -1,5 +1,6 @@
 # ivbinary_maker
 
+v0.3.dev exports for ivoyager_core v0.0.19.dev
 v0.2 exports for ivoyager v0.0.16.
 
 Converts raw source data into binary and texture files for use in I, Voyager.
