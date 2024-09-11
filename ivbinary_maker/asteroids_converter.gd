@@ -50,8 +50,6 @@ const EXPORT_DIR := "res://ivbinary_export/asteroid_binaries"
 const BINARIES_EXTENSION := "ivbinary"
 
 # source data
-const CAT_EPOCH := 60200.0 # This changes! Check 'Epoch(MJD)' in *.cat files!
-const J2000_SEC := (CAT_EPOCH - 51544.5) * 86400.0 # seconds from our internal J2000 epoch
 const ASTEROID_ORBITAL_ELEMENTS_NUMBERED_FILE := "allnum.cat"
 const ASTEROID_ORBITAL_ELEMENTS_MULTIOPPOSITION_FILE := "ufitobs.cat"
 const ASTEROID_PROPER_ELEMENTS_FILES := ["all.syn", "tno.syn", "secres.syn"]
@@ -73,6 +71,8 @@ const SBG_CLASS_ASTEROIDS := IVEnums.SBGClass.SBG_CLASS_ASTEROIDS
 var _thread: Thread
 
 # current processing
+var _epoch := -INF # expected to be consistent in all .cat files
+var _j2000_sec := NAN
 var _asteroid_elements := PackedFloat32Array()
 var _asteroid_names := []
 var _iau_numbers := [] # -1 for unnumbered
@@ -187,7 +187,7 @@ func revise_proper() -> void:
 			
 			# recalculate M0 using proper_n
 			var M: float = _asteroid_elements[index * N_ELEMENTS + 7]
-			var M0 := wrapf(M - proper_n * J2000_SEC, 0.0, TAU) # replaced if we have proper elements
+			var M0 := wrapf(M - proper_n * _j2000_sec, 0.0, TAU) # replaced if we have proper elements
 			_asteroid_elements[index * N_ELEMENTS + 5] = M0
 			
 			# set proper elements
@@ -469,7 +469,11 @@ func _read_astdys_cat_file(data_file: String, func_type: int) -> void:
 			print("Duplicate name: " + astdys2_name + "; skipping...")
 			continue
 		
-#		assert(!_astdys2_lookup.has(astdys2_name), "Duplicate name: " + astdys2_name)
+		var epoch := float(line_array[1])
+		if epoch != _epoch:
+			assert(_epoch == -INF, "Inconsistent 'Epoch(MJD) in .cat file")
+			_epoch = epoch # assigned once!
+			_j2000_sec = (epoch - 51544.5) * 86400.0 # seconds from our internal J2000 epoch
 		
 		_astdys2_lookup[astdys2_name] = _index
 		_asteroid_names.append(astdys2_name)
@@ -484,7 +488,7 @@ func _read_astdys_cat_file(data_file: String, func_type: int) -> void:
 		var n := sqrt(GM / (a * a * a)) # replaced if we have proper elements
 		
 		# M = M0 + n * t
-		var M0 := wrapf(M - n * J2000_SEC, 0.0, TAU) # replaced if we have proper elements
+		var M0 := wrapf(M - n * _j2000_sec, 0.0, TAU) # replaced if we have proper elements
 		
 		# [a, e, i, Om, w, M0, n, M, mag, s, g, de]
 		_asteroid_elements.append(a) # au
