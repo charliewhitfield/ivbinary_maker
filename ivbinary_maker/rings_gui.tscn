@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://d2ccwlq7txkng"]
 
-[ext_resource type="Script" path="res://ivbinary_maker/rings_gui.gd" id="1"]
+[ext_resource type="Script" uid="uid://b7vbpap1ohhfu" path="res://ivbinary_maker/rings_gui.gd" id="1"]
 
 [node name="Rings" type="VBoxContainer"]
 offset_right = 40.0
