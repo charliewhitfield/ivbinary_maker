@@ -30,11 +30,6 @@ const DISABLE_THREADS_IF_WEB := true # override for browser compatibility
 const VERBOSE_GLOBAL_SIGNALS := false
 const VERBOSE_STATEMANAGER_SIGNALS := false
 
-# const EXTENSION_NAME := "ivbinary_maker"
-# const EXTENSION_VERSION := "0.2"
-# const EXTENSION_BUILD := ""
-# const EXTENSION_STATE := "dev"
-# const EXTENSION_YMD := 20230925
 
 
 func _init() -> void:
@@ -50,7 +45,6 @@ func _init() -> void:
 	IVCoreInitializer.program_refcounteds.clear()
 	IVCoreInitializer.program_nodes.clear()
 	IVCoreInitializer.gui_nodes.clear()
-	IVCoreInitializer.procedural_objects.clear()
 	IVCoreInitializer.initializers[&"TableInitializer"] = IVTableInitializer
 	
 	# ivbinary_maker

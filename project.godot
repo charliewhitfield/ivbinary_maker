@@ -29,6 +29,7 @@ IVCoreSettings="*res://addons/ivoyager_core/editor_plugin/../singletons/core_set
 IVCoreInitializer="*res://addons/ivoyager_core/editor_plugin/../singletons/core_initializer.gd"
 IVQConvert="*res://addons/ivoyager_units/qconvert.gd"
 IVQFormat="*res://addons/ivoyager_units/qformat.gd"
+IVAstronomy="*res://addons/ivoyager_core/editor_plugin/../singletons/astronomy.gd"
 
 [debug]
 
