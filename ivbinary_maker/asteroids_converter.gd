@@ -65,7 +65,7 @@ const GM := 1.32712440042e20 # m^3 s^-2 (used only if we don't have proper eleme
 # internal
 const N_ELEMENTS := 12 # [a, e, i, Om, w, M0, n, M, mag, s, g, de]
 const BINARY_FILE_MAGNITUDES := IVBinaryAsteroidsBuilder.BINARY_FILE_MAGNITUDES
-const SBG_CLASS_ASTEROIDS := IVEnums.SBGClass.SBG_CLASS_ASTEROIDS
+const SBG_CLASS_ASTEROIDS := IVSmallBodiesGroup.SBGClass.SBG_CLASS_ASTEROIDS
 
 
 var _thread: Thread
