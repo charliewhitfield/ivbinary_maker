@@ -19,16 +19,14 @@
 # *****************************************************************************
 extends RefCounted
 
-# This file modifies ivoyager_core & ivoyager_table_importer operation.
+# This file modifies ivoyager_core operation. We remove EVERYTHING and add back
+# only IVTableInitializer. We load all data tables, although we only need
+# small_bodies_groups.tsv.
 #
-# v0.3.dev exports data for ivoyager_core v0.0.19.dev (Godot 4.3)
+# v0.4 update to current plugins after Tables/Units split (Godot 4.4.1).
+# v0.3 exports data for ivoyager_core v0.0.19.dev (Godot 4.3)
 # v0.2 exports data for ivoyager/ivoyager_core v0.0.16 to .18 (Godot 4.x).
 # v0.1 exports data for ivoyager v0.0.14 to .15 (Godot 3.x).
-
-const USE_THREADS := true # set false for debugging
-const DISABLE_THREADS_IF_WEB := true # override for browser compatibility
-const VERBOSE_GLOBAL_SIGNALS := false
-const VERBOSE_STATEMANAGER_SIGNALS := false
 
 
 
@@ -36,9 +34,6 @@ func _init() -> void:
 	
 	var version: String = ProjectSettings.get_setting("application/config/version")
 	print("IVBinary Maker %s - https://ivoyager.dev" % version)
-	
-	if VERBOSE_GLOBAL_SIGNALS and OS.is_debug_build:
-		IVDebug.signal_verbosely_all(IVGlobal, "Global")
 	
 	# Remove everything and add only what we need.
 	IVCoreInitializer.initializers.clear()

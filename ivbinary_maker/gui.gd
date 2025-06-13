@@ -20,4 +20,3 @@
 class_name GUI
 extends Control
 const SCENE := "res://ivbinary_maker/gui.tscn"
-
