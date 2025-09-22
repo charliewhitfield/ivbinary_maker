@@ -2,6 +2,13 @@
 
 File format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.5 - UNRELEASED]
+
+Under development using Godot 4.5 and under development "beta" 0.1 plugins.
+
+### Changed
+* Remove expectation/requirement that allnum.cat asteroid number matches line number minus header.
+
 ## [v0.4] - 2024-06-13
 
 Developed using Godot 4.4.1, ivoyager_core v0.0.25, ivoyager_tables v0.0.4, ivoyager_units v0.0.4.
@@ -36,6 +43,7 @@ Developed using Godot 3.5.2, ivoyager 0.0.14.
 * Exports Saturn rings texture for use in ivoyager_assets/rings/.
 
 
+[v0.5]: https://github.com/ivoyager/ivbinary_maker/compare/v0.4...HEAD
 [v0.4]: https://github.com/ivoyager/ivbinary_maker/compare/v0.3...v0.4
 [v0.3]: https://github.com/ivoyager/ivbinary_maker/compare/v0.2...v0.3
 [v0.2]: https://github.com/ivoyager/ivbinary_maker/compare/v0.1...v0.2

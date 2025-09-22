@@ -26,7 +26,7 @@ Osculating elements:
 * ufitobs.cat	- Multiopposition asteroids orbital elements, one line format, epoch near present time.
 
 Download from: https://sbn.psi.edu/pds/resource/discover.html
-* discover.tab	- Has name and discoverer for numbered asteroids as of 2008. File from EAR-A-5-DDR-ASTNAMES-DISCOVERY-V12.0/data.
+* discover.tab	- Has name and discoverer for numbered asteroids as of 2008. File from EAR-A-5-DDR-ASTNAMES-DISCOVERY-V12.0/data. **This is no longer maintained! We need a replacement source!**
 
 #### Not used (yet)
 Family data:

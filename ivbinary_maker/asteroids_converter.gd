@@ -74,9 +74,9 @@ var _thread: Thread
 var _epoch := -INF # expected to be consistent in all .cat files
 var _j2000_sec := NAN
 var _asteroid_elements := PackedFloat32Array()
-var _asteroid_names := []
-var _iau_numbers := [] # -1 for unnumbered
-var _astdys2_lookup := {} # index by astdys-2 format (number string or "2010UZ106")
+var _asteroid_names: Array[String] = []
+var _iau_numbers: Array[int] = [] # -1 for unnumbered
+var _astdys2_lookup: Dictionary[String, int] = {} # index by astdys-2 format (number string or "2010UZ106")
 var _trojan_elements := {}
 var _index := 0
 
@@ -110,7 +110,7 @@ func add_multiopposition() -> void:
 func revise_names() -> void:
 	# The name file used here and asteroid numbered file both both have
 	# line number = asteroid number (not counting header). We test that and use for indexing.
-	var index := 0
+	
 	var count := 0
 	var path := SOURCE_PATH + ASTEROID_NAMES_FILE
 	var read_file := FileAccess.open(path, FileAccess.READ)
@@ -122,30 +122,25 @@ func revise_names() -> void:
 	while read_file.get_position() < file_length:
 		var line: String = read_file.get_line()
 		var number := int(line.substr(0, 6))
-		assert(number == index + 1)
-		@warning_ignore("unsafe_call_argument")
-		assert(number == int(_asteroid_names[index]))
 		var astdys2_name := line.substr(7, 17)
 		astdys2_name = astdys2_name.strip_edges(false, true)
-		if astdys2_name == "-":
-			astdys2_name = ""
+		if astdys2_name == "-" or !astdys2_name:
+			continue
 		
-		# Do we want to add year-code if we have number?
-#		if astdys2_name == "": # get and format year-number astdys2_name, if any
-#			astdys2_name = line.substr(25, 4) + line.substr(30, 6) # skip space conforms w/ AstDyS-2
-#			if astdys2_name.substr(0, 1) == "-":
-#				astdys2_name = ""
-#			else:
-#				astdys2_name = astdys2_name.strip_edges(false, true)
-		if astdys2_name:
-			count += 1
-			astdys2_name = str(number) + " " + astdys2_name
-			if count == status_index:
-				_update_status(REVISE_NAMES, "%s count (renamed: \"%s\" to \"%s\""
-						% [count, _asteroid_names[index], astdys2_name])
-				status_index += STATUS_INTERVAL
-			_asteroid_names[index] = astdys2_name
-		index += 1
+		count += 1
+		var number_str := str(number)
+		if !_astdys2_lookup.has(number_str):
+			print("Missing numbered asteroid ", number_str)
+			continue
+		
+		var index := _astdys2_lookup[number_str]
+		astdys2_name = number_str + " " + astdys2_name
+		if count == status_index:
+			_update_status(REVISE_NAMES, "%s count (renamed: \"%s\" to \"%s\"" % [
+					count, _asteroid_names[index], astdys2_name])
+			status_index += STATUS_INTERVAL
+		_asteroid_names[index] = astdys2_name
+	
 	read_file.close()
 	_update_status(REVISE_NAMES, str(count) + " renamed")
 
@@ -170,12 +165,11 @@ func revise_proper() -> void:
 				continue
 			var line_array := line.split(" ", false)
 			var astdys2_name: String = line_array[0]
-			var index: int
-			if _astdys2_lookup.has(astdys2_name):
-				index = _astdys2_lookup[astdys2_name]
-			else:
+			if !_astdys2_lookup.has(astdys2_name):
 				n_not_found += 1
 				continue
+			
+			var index := _astdys2_lookup[astdys2_name]
 			var proper_a := float(line_array[2]) * AU
 			var proper_e := float(line_array[3]) # really de in secular resonant
 			var proper_i := asin(float(line_array[4])) # sin(i) -> i
